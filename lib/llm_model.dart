@@ -3,7 +3,8 @@ enum LLMModelCompany {
   Anthropic('Anthropic'),
   DeepSeek('DeepSeek'),
   Google('Google'),
-  Meta("Meta");
+  Meta("Meta"),
+  Mistral("Mistral");
 
   final String value;
   const LLMModelCompany(this.value);
@@ -12,7 +13,9 @@ enum LLMModelCompany {
 class LLMModel {
   final LLMModelCompany company;
   final String name;
+  // used to call the openAI API
   final String value;
+  // displayed on the main page of the app
   final String short;
 
   LLMModel({

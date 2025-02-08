@@ -78,46 +78,23 @@ class _ChatWindowState extends State<ChatWindow> {
           // Now update the state with the result
           setState(() {
             _currentChat = newChat;
+            _currentChat.model = _modelState.currentModel;
             _chatHistory = _currentChat.messages.reversed
-                .map((m) => convertMessageToOpenAI(m))
+                .map((m) => ModelState.convertMessageToOpenAI(m))
                 .toList();
           });
         } catch (e) {
           debugPrint("/chat/get Exception");
         }
       }
-
-      // Did the model change?
-      if (_modelState.currentModel.value != _currentChat.model.value) {
-        // Update the model, then refresh state if needed.
-        setState(() {
-          _currentChat.model = _modelState.currentModel;
-        });
-      }
     }
-  }
-
-  static OpenAIChatCompletionChoiceMessageModel convertMessageToOpenAI(
-      types.Message message) {
-    OpenAIChatMessageRole role;
-    switch (message.author.role) {
-      case types.Role.user:
-        role = OpenAIChatMessageRole.user;
-        break;
-      case types.Role.agent:
-        role = OpenAIChatMessageRole.assistant;
-        break;
-      default:
-        role = OpenAIChatMessageRole.user;
+    // Did the model change?
+    if (_modelState.currentModel.value != _currentChat.model.value) {
+      // Update the model, then refresh state if needed.
+      setState(() {
+        _currentChat.model = _modelState.currentModel;
+      });
     }
-    return OpenAIChatCompletionChoiceMessageModel(
-      role: role,
-      content: [
-        OpenAIChatCompletionChoiceMessageContentItemModel.text(
-          (message as types.TextMessage).text,
-        ),
-      ],
-    );
   }
 
   @override
@@ -157,7 +134,7 @@ class _ChatWindowState extends State<ChatWindow> {
     final botPlaceholderMessage = types.TextMessage(
       id: uuid.v4(),
       author: _assistant,
-      text: ' . . . ',
+      text: '${_currentChat.model.name} is thinking . . . ',
       createdAt: DateTime.now().millisecondsSinceEpoch,
     );
 
@@ -170,6 +147,8 @@ class _ChatWindowState extends State<ChatWindow> {
     final buffer = StringBuffer();
 
     try {
+      ("Received partial delta: $_chatHistory");
+
       // 4) Start streaming
       final stream = OpenAI.instance.chat.createStream(
         model: _currentChat.model.value,
@@ -228,12 +207,12 @@ class _ChatWindowState extends State<ChatWindow> {
                 ],
               ),
             );
-            for (var item in _chatHistory) {
-              print(jsonEncode(item.toMap()));
-            }
-            for (var item in _currentChat.messages) {
-              print(jsonEncode(item.toJson()));
-            }
+            // for (var item in _chatHistory) {
+            //   print(jsonEncode(item.toMap()));
+            // }
+            // for (var item in _currentChat.messages) {
+            //   print(jsonEncode(item.toJson()));
+            // }
             _modelState.saveCurrentChat(_currentChat);
           }
           subscription?.cancel();
@@ -251,21 +230,10 @@ class _ChatWindowState extends State<ChatWindow> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
+      bottom: false,
       child: Chat(
         user: _user,
         messages: _currentChat.messages,
-        // textMessageBuilder: (message,
-        //     {required messageWidth, required showName}) {
-        //   if (message.author.role == types.Role.agent) {
-        //     return GptMarkdown(message.text);
-        //   } else {
-        //     return Container(
-        //       padding:
-        //           const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-        //       child: GptMarkdown(message.text),
-        //     );
-        //   }
-        // },
         bubbleBuilder: (child,
             {required message, required nextMessageInGroup}) {
           if (message.type == types.MessageType.text) {
@@ -309,7 +277,8 @@ class _ChatWindowState extends State<ChatWindow> {
           backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
           messageMaxWidth: 800,
         ),
-        messageWidthRatio: 0.88,
+        messageWidthRatio: 0.85,
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       ),
     );
   }

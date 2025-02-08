@@ -1,16 +1,22 @@
-import 'package:chat_tqw/chat_window.dart';
-import 'package:chat_tqw/llm_model.dart';
-import 'package:chat_tqw/model_state.dart';
-import 'package:provider/provider.dart';
-import 'package:chat_tqw/drawer_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:dart_openai/dart_openai.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
+import 'model_state.dart';
+import 'drawer_content.dart';
+import 'chat_window.dart';
+import 'model_selector.dart';
+import 'new_chat_button.dart';
+import 'user_state.dart';
 
-void main() async {
-  // Ensure flutter bindings are initialized
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    // Optionally include portraitDown if you want to allow upside down portrait:
+    // DeviceOrientation.portraitDown,
+  ]);
   await dotenv.load(fileName: ".env");
   OpenAI.apiKey = dotenv.env['OPENAI_API_KEY']!;
   OpenAI.baseUrl = dotenv.env['OPENAI_BASE_URL']!;
@@ -25,85 +31,31 @@ class ChatApp extends StatefulWidget {
 }
 
 class _ChatAppState extends State<ChatApp> {
+  // Instantiate the ModelState. This can be used to hold your app’s state.
   final _modelState = ModelState();
-  late LLMModel selectedModel;
-
-  @override
-  void initState() {
-    super.initState();
-    selectedModel = _modelState.currentModel;
-  }
+  final _userState = UserState();
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<ModelState>(create: (_) => _modelState),
+        ChangeNotifierProvider<UserState>(create: (_) => _userState),
       ],
       child: MaterialApp(
         home: Scaffold(
-          drawer: DrawerContent(),
+          drawer: const DrawerContent(),
           appBar: AppBar(
-            actions: [
+            actions: const [
               Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: IconButton(
-                  icon: const Icon(Icons.edit_square),
-                  tooltip: 'New Chat',
-                  onPressed: () {
-                    _modelState.currentChatId = "";
-                  },
-                ),
+                padding: EdgeInsets.only(right: 8.0),
+                child: NewChatButton(),
               ),
             ],
-            title: MenuAnchor(
-              alignmentOffset: Offset(0, 10), // Center dynamically
-              builder: (BuildContext context, MenuController controller,
-                  Widget? child) {
-                return GestureDetector(
-                  onTap: () {
-                    if (controller.isOpen) {
-                      controller.close();
-                    } else {
-                      controller.open();
-                    }
-                  },
-                  child: RichText(
-                    text: TextSpan(
-                      children: <TextSpan>[
-                        TextSpan(
-                            text: 'ChatTQW',
-                            style: Theme.of(context).textTheme.titleLarge),
-                        TextSpan(
-                            text: ' ${selectedModel.short} ›',
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelLarge!
-                                .copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .outlineVariant,
-                                )),
-                      ],
-                    ),
-                  ),
-                );
-              },
-              menuChildren: ModelState.availableModels.map((model) {
-                return MenuItemButton(
-                  onPressed: () {
-                    setState(() {
-                      selectedModel = model;
-                      _modelState.currentModel = model;
-                    });
-                  },
-                  child: Text("${model.company.value}: ${model.name}"),
-                );
-              }).toList(),
-            ),
-            centerTitle: true, // Ensure the dropdown stays centered
+            title: const ModelSelector(),
+            centerTitle: true,
           ),
-          body: ChatWindow(),
+          body: const ChatWindow(),
         ),
       ),
     );

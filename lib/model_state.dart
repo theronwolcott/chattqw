@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:collection/collection.dart'; // Required for firstOrNull
 import 'package:flutter_chat_types/flutter_chat_types.dart' as chat_types;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dart_openai/dart_openai.dart';
 import 'dart:async';
 
+import 'user_state.dart';
 import 'api_service.dart';
 import 'llm_model.dart';
 import 'user_chat.dart';
@@ -18,20 +20,29 @@ class ModelState extends ChangeNotifier {
   ModelState._internal() {
     _loadModels();
     _loadPastChats();
+    userState.addListener(() {
+      if (userState.id != _currentUserId) {
+        // userId changed so reload past chats from server
+        _currentUserId = userState.id;
+        _searchQuery = '';
+        _currentChatId = "";
+        _loadPastChats();
+      }
+    });
   }
 
   static final List<LLMModel> availableModels = [
     LLMModel(
       company: LLMModelCompany.OpenAI,
-      name: "GPT-4o",
-      value: "openai/chatgpt-4o-latest",
-      short: "chatgpt-4o",
-    ),
-    LLMModel(
-      company: LLMModelCompany.OpenAI,
       name: "GPT-4o mini",
       value: "openai/gpt-4o-mini",
       short: "chatgpt-4o-mini",
+    ),
+    LLMModel(
+      company: LLMModelCompany.OpenAI,
+      name: "GPT-4o",
+      value: "openai/chatgpt-4o-latest",
+      short: "chatgpt-4o",
     ),
     LLMModel(
       company: LLMModelCompany.OpenAI,
@@ -65,6 +76,12 @@ class ModelState extends ChangeNotifier {
     ),
     LLMModel(
       company: LLMModelCompany.Anthropic,
+      name: "Claude 3.5 Haiku",
+      value: "anthropic/claude-3.5-haiku",
+      short: "claude-3-haiku",
+    ),
+    LLMModel(
+      company: LLMModelCompany.Anthropic,
       name: "Claude 3 Haiku",
       value: "anthropic/claude-3-haiku",
       short: "claude-3-haiku",
@@ -72,8 +89,14 @@ class ModelState extends ChangeNotifier {
     LLMModel(
       company: LLMModelCompany.Google,
       name: "Gemini 2.0 Flash Thinking",
-      value: "google/gemini-2.0-flash-thinking-exp-1219:free",
+      value: "google/gemini-2.0-flash-thinking-exp:free",
       short: "gemini-2.0-flash-thinking",
+    ),
+    LLMModel(
+      company: LLMModelCompany.Google,
+      name: "Gemini 2.0 Flash",
+      value: "google/gemini-2.0-flash-001",
+      short: "gemini-2.0-flash",
     ),
     LLMModel(
       company: LLMModelCompany.Google,
@@ -95,7 +118,7 @@ class ModelState extends ChangeNotifier {
     ),
     LLMModel(
       company: LLMModelCompany.DeepSeek,
-      name: "R1 Llama 70B",
+      name: "R1 Distill Llama 70B",
       value: "deepseek/deepseek-r1-distill-llama-70b",
       short: "deepseek-r1-llama-70b",
     ),
@@ -113,18 +136,47 @@ class ModelState extends ChangeNotifier {
     ),
     LLMModel(
       company: LLMModelCompany.Meta,
-      name: "R1 Distill Qwen 14B",
+      name: "Llama 3.3 70B",
       value: "meta-llama/llama-3.3-70b-instruct",
       short: "llama-3.3-70b",
+    ),
+    LLMModel(
+      company: LLMModelCompany.Meta,
+      name: "Llama 3.2 3B",
+      value: "meta-llama/llama-3.2-3b-instruct",
+      short: "llama-3.2-3b",
+    ),
+    LLMModel(
+      company: LLMModelCompany.Meta,
+      name: "Llama 3.2 1B",
+      value: "meta-llama/llama-3.2-1b-instruct",
+      short: "llama-3.2-1b",
+    ),
+    LLMModel(
+      company: LLMModelCompany.Mistral,
+      name: "Mistral Small 3",
+      value: "mistralai/mistral-small-24b-instruct-2501",
+      short: "mistral-small-24b",
+    ),
+    LLMModel(
+      company: LLMModelCompany.Mistral,
+      name: "Mistral Nemo",
+      value: "mistralai/mistral-nemo",
+      short: "mistral-nemo",
     ),
   ];
 
   LLMModel _currentModel = availableModels.first;
+  final LLMModel _labelSummaryModel =
+      findModelByValue("meta-llama/llama-3.3-70b-instruct");
   String currentModelKey = 'ModelState.currentModel';
   late SharedPreferences prefs;
   final Completer<void> _completer = Completer<void>();
   late List<UserChatItem> _pastChats;
   String _currentChatId = "";
+  String _searchQuery = '';
+  final userState = UserState();
+  String _currentUserId = "";
 
   static LLMModel findModelByValue(String modelValue) {
     var m =
@@ -133,14 +185,15 @@ class ModelState extends ChangeNotifier {
   }
 
   Future<void> _loadModels() async {
-    prefs = await SharedPreferences.getInstance();
     _currentModel = availableModels.first;
+    prefs = await SharedPreferences.getInstance();
     var currentModelFromDisk = prefs.getString(currentModelKey);
-
+    debugPrint("currentModelFromDisk: $currentModelFromDisk");
     if (currentModelFromDisk == null) {
       prefs.setString(currentModelKey, _currentModel.value);
     } else {
       _currentModel = findModelByValue(currentModelFromDisk);
+      notifyListeners();
     }
     _completer.complete(); // Mark as initialized
   }
@@ -151,12 +204,8 @@ class ModelState extends ChangeNotifier {
       "/chat/list",
       UserChatItem.fromJson,
     );
+    // update list locally
     _pastChats = data;
-  }
-
-  void reset() {
-    _currentModel = availableModels.first;
-    prefs.setString(currentModelKey, _currentModel.value);
     notifyListeners();
   }
 
@@ -168,11 +217,7 @@ class ModelState extends ChangeNotifier {
         // add to the user's list of chats if it isn't already there
 
         // summarize it to get the label
-        var label = (chat.messages.last)
-            .text
-            .split(RegExp(r'\s+'))
-            .take(6)
-            .join(' '); // Take first 6 words and join back
+        var label = await getLabel(chat.messages);
 
         // add to list locally
         _pastChats.add(UserChatItem(
@@ -198,14 +243,47 @@ class ModelState extends ChangeNotifier {
     }
   }
 
+  /// uses an LLM to generate a short phrase to use as the "label" for
+  /// a chat in the sidebar/drawer
+  /// It takes the existing messages, and adds a system message with
+  /// instructions for the LLM
+  Future<String> getLabel(List<chat_types.TextMessage> messages) async {
+    var chatHistory =
+        messages.reversed.map((m) => convertMessageToOpenAI(m)).toList();
+    chatHistory.add(OpenAIChatCompletionChoiceMessageModel(
+      role: OpenAIChatMessageRole.system,
+      content: [
+        OpenAIChatCompletionChoiceMessageContentItemModel.text(
+          "Write a *very* short phrase to summarize the topic of this conversation so far. No emoji.",
+        ),
+      ],
+    ));
+    var result = await OpenAI.instance.chat
+        .create(model: _labelSummaryModel.value, messages: chatHistory);
+    var label = result.choices.first.message.content!
+        .where((item) => item.type == 'text' && item.text != null)
+        .map((item) => item.text!)
+        .join('')
+        .trim();
+
+    return label;
+  }
+
+  /// getter for currentModel
   LLMModel get currentModel => _currentModel;
+
+  /// setter for currentModel -- notifies listeners of change
   set currentModel(LLMModel value) {
     _currentModel = value;
     notifyListeners();
+    // save to disk
     prefs.setString(currentModelKey, _currentModel.value);
   }
 
+  /// getter for currentChatId
   String get currentChatId => _currentChatId;
+
+  /// setter for currentChatId -- notifies listeners of change
   set currentChatId(String value) {
     _currentChatId = value;
     notifyListeners();
@@ -213,8 +291,39 @@ class ModelState extends ChangeNotifier {
 
   List<UserChatItem> get pastChats => _pastChats;
 
+  String get searchQuery => _searchQuery;
+
+  set searchQuery(String value) {
+    if (_searchQuery != value) {
+      _searchQuery = value;
+      notifyListeners();
+    }
+  }
+
   // Future<String> get idAsync async {
   //   await _completer.future; // Wait for initialization if needed
   //   return _id;
   // }
+  static OpenAIChatCompletionChoiceMessageModel convertMessageToOpenAI(
+      chat_types.Message message) {
+    OpenAIChatMessageRole role;
+    switch (message.author.role) {
+      case chat_types.Role.user:
+        role = OpenAIChatMessageRole.user;
+        break;
+      case chat_types.Role.agent:
+        role = OpenAIChatMessageRole.assistant;
+        break;
+      default:
+        role = OpenAIChatMessageRole.user;
+    }
+    return OpenAIChatCompletionChoiceMessageModel(
+      role: role,
+      content: [
+        OpenAIChatCompletionChoiceMessageContentItemModel.text(
+          (message as chat_types.TextMessage).text,
+        ),
+      ],
+    );
+  }
 }
