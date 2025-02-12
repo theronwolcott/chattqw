@@ -1,16 +1,17 @@
 # ChatTQW - Universal AI Chatbot for iOS & Android
 
-A **generative AI chatbot mobile app** that supports multiple **LLM models** (GPT-4, Claude, DeepSeek, Gemini, LLaMA, etc.) and provides a **seamless chat experience** with **local state management**, **real-time message streaming** and connects to a [**Node.js API back-end**](https://github.com/theronwolcott/chattqw-node).
+<img src="images/ChatTQW_1.gif" width="365" height="720" alt="ChatTQW demo" align="right">
+
+A **generative AI chatbot mobile app** that supports multiple **LLM models** (GPT-4, Claude, DeepSeek, Gemini, LLaMA, etc.) and provides a **seamless chat experience** with **local state management**, **real-time message streaming** and connects to a [**Node.js API back-end**](/theronwolcott/chattqw-node).
 
 This project demonstrates **full-stack execution**, including:
-
 - **Flutter mobile app** (front-end)
-- **Node.js API server** (back-end --- [project link](https://github.com/theronwolcott/chattqw-node))
+- **Node.js API server** (back-end --- [project link](/theronwolcott/chattqw-node))
 - **MongoDB database** (persistent user info and chat history)
 - **Multi-LLM support** (OpenAI, Anthropic, DeepSeek, Meta, Google)
 - **State management** with Provider
 
-## Features
+### Features
 
 - **Multi-LLM Support**: Easily switch between OpenAI, Anthropic, DeepSeek, Meta, and Google AI models --- even in the middle of a chat.
 - **Real-Time Message Streaming**: AI responses appear token-by-token, just like ChatGPT.
@@ -23,10 +24,9 @@ This project demonstrates **full-stack execution**, including:
 - **User Preferences**: Stores user preferences locally via **SharedPreferences**.
 - **Secure API Calls**: Fetches data securely using **HTTP requests with dotenv-based API keys**.
 
-## Tech Stack
+### Tech Stack
 
-### Front-End (Flutter)
-
+#### Front-End (Flutter)
 - **Dart** (Flutter framework)
 - **Provider** (State management)
 - **flutter_chat_ui** (Chat interface)
@@ -35,16 +35,14 @@ This project demonstrates **full-stack execution**, including:
 - **flutter_login** (Sign Up/Login flow)
 - **flutter_dotenv** (Environment variables)
 
-### Back-End (Node.js --- [project link](https://github.com/theronwolcott/chattqw-node))
-
+#### Back-End (Node.js --- [project link](/theronwolcott/chattqw-node))
 - **Express.js** (API framework)
 - **MongoDB & Mongoose** (Database & ODM)
 - **dotenv** (Environment variables)
 - **bcrypt** (Password hashing)
 - **uuid** (Chat ID management)
 
-### Database
-
+#### Database
 - **MongoDB** (Atlas Cloud Database)
 - Stores **chat history**, **user information**, and **conversation metadata**.
 
@@ -55,53 +53,44 @@ This project follows a **modular, provider-driven architecture** for **scalabili
 ### 📌 **Core Components**
 
 #### **1. `main.dart`** - Entry Point
-
 - Initializes Flutter app.
 - Loads environment variables (`.env`).
 - Sets up state management (`Provider`).
 - Instantiates the **chat UI**, **drawer menu**, and **model selector**.
 
 #### **2. `chat_window.dart`** - Chat UI
-
 - Displays the conversation.
 - Supports **Markdown AI responses** (via `gpt_markdown`).
 - Implements **real-time message streaming**.
 - Handles **user input**, **message history**, and **LLM interactions**.
 
 #### **3. `model_state.dart`** - Global Model State Singleton
-
 - Tracks **current LLM model**, **chat history**, and **search queries**.
 - Stores data using **SharedPreferences**.
 - Manages API calls and UI updates **efficiently** with `ChangeNotifier`.
 
 #### **4. `drawer_content.dart`** - Chat History Drawer
-
 - Displays **past chats**, organized by date.
 - Implements **search filtering**.
 - Allows switching between past conversations.
 
 #### **5. `model_selector.dart`** - LLM Model Selector
-
 - Custom multi-level dropdown menu for selecting **OpenAI, Anthropic, DeepSeek, Google, or Meta** models.
 - Updates the **selected AI model in real-time**.
 
 #### **6. `login_screen.dart`** - Sign Up/Login Flow
-
 - Wires login/sign up UI to UserState() (below).
 - Uses `flutter_login` plugin for UI.
 
 #### **7. `user_state.dart`** - Global User State Singleton
-
 - Calls **API endpoints** login/sign up.
 - Uses `flutter_login` plugin.
 
 #### **8. `api_service.dart`** - API Communication Layer
-
 - Handles **secure API requests** to the Node.js backend.
 - Supports **user sign up/login**, **fetching chat history**, **saving messages**, and **updating chat metadata**.
 
-#### **9. [Node.js Backend](https://github.com/theronwolcott/chattqw-node)**
-
+#### **9.  [Node.js Backend](/theronwolcott/chattqw-node)**
 - **MongoDB database** for chat storage.
 - **Express.js API** endpoints:
   - `/chat/list` - Fetch all past chats.
@@ -115,18 +104,17 @@ This project follows a **modular, provider-driven architecture** for **scalabili
 
 ## API Endpoints
 
-| Method | Endpoint              | Description                         |
-| ------ | --------------------- | ----------------------------------- |
-| `POST` | `/chat/list`          | Fetches the list of past user chats |
-| `POST` | `/chat/get`           | Retrieves a specific chat by ID     |
-| `POST` | `/chat/update`        | Updates chat labels                 |
-| `POST` | `/chat/save-messages` | Saves new chat messages             |
-| `POST` | `/user/get`           | Retrieves the current user          |
-| `POST` | `/user/login`         | Authenticates existing users        |
-| `POST` | `/user/signup`        | Registers new users                 |
+| Method | Endpoint                | Description                           |
+|--------|-------------------------|---------------------------------------|
+| `POST` | `/chat/list`            | Fetches the list of past user chats  |
+| `POST` | `/chat/get`             | Retrieves a specific chat by ID      |
+| `POST` | `/chat/update`          | Updates chat labels                  |
+| `POST` | `/chat/save-messages`   | Saves new chat messages              |
+| `POST` | `/user/get`             | Retrieves the current user           |
+| `POST` | `/user/login`           | Authenticates existing users         |
+| `POST` | `/user/signup`          | Registers new users                  |
 
 ### **Example API Call**
-
 ```dart
 final ApiService apiService = ApiService();
 final chats = await apiService.fetchList<UserChatItem>(
@@ -154,22 +142,18 @@ final chats = await apiService.fetchList<UserChatItem>(
 ## 🛠️ Setup Instructions
 
 ### **1. Clone the Repository**
-
 ```sh
 git clone https://github.com/theronwolcott/chattqw.git
 cd chattqw
 ```
 
 ### **2. Install Flutter Dependencies**
-
 ```sh
 flutter pub get
 ```
 
 ### **3. Configure Environment Variables**
-
 Create a `.env` file with your API keys:
-
 ```
 OPENAI_API_KEY=your_openai_api_key
 OPENAI_BASE_URL=your_base_url
@@ -177,14 +161,19 @@ API_ROOT=http://your-node-server.com
 ```
 
 ### **4. Run the Flutter App**
-
 ```sh
 flutter run
 ```
 
 ### **5. Run the Back-End Project**
+See [ChatTQW Back-End Project](/theronwolcott/chattqw-node) (Node.js)
 
-See [ChatTQW Back-End Project](https://github.com/theronwolcott/chattqw-node) (Node.js)
+## Screenshots
+
+| Chat UI | Chat History Drawer | Model Selector |
+|---------|---------------------|----------------|
+| ![Chat](images/chat_ui.png) | ![Drawer](images/chat_drawer.png) | ![Model](images/model_selector.png) |
+
 
 ## 🚀 Future Enhancements
 
@@ -199,3 +188,4 @@ Theron Wolcott
 📧 Email: theronwolcott@gmail.com  
 🔗 LinkedIn: [linkedin.com/in/theronwolcott](https://linkedin.com/in/theronwolcott)  
 💻 GitHub: [github.com/theronwolcott](https://github.com/theronwolcott)
+
