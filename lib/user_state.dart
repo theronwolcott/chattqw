@@ -22,6 +22,7 @@ class UserState extends ChangeNotifier {
   String uuidKey = 'UserState.uuid';
   User? _currentUser;
 
+  // Called the first time the singleton is initialized
   Future<void> _init() async {
     prefs = await SharedPreferences.getInstance();
     _loadUserId();
