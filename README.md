@@ -2,11 +2,11 @@
 
 <img src="images/ChatTQW_1.gif" width="365" height="720" alt="ChatTQW demo" align="right">
 
-A **generative AI chatbot mobile app** that supports multiple **LLM models** (GPT-4, Claude, DeepSeek, Gemini, LLaMA, etc.) and provides a **seamless chat experience** with **local state management**, **real-time message streaming** and connects to a [**Node.js API back-end**](/theronwolcott/chattqw-node).
+A **generative AI chatbot mobile app** that supports multiple **LLM models** (GPT-4, Claude, DeepSeek, Gemini, LLaMA, etc.) and provides a **seamless chat experience** with **local state management**, **real-time message streaming** and connects to a [**Node.js API back-end**](https://github.com/theronwolcott/chattqw-node).
 
 This project demonstrates **full-stack execution**, including:
 - **Flutter mobile app** (front-end)
-- **Node.js API server** (back-end --- [project link](/theronwolcott/chattqw-node))
+- **Node.js API server** (back-end --- [project link](https://github.com/theronwolcott/chattqw-node)
 - **MongoDB database** (persistent user info and chat history)
 - **Multi-LLM support** (OpenAI, Anthropic, DeepSeek, Meta, Google)
 - **State management** with Provider
@@ -35,7 +35,7 @@ This project demonstrates **full-stack execution**, including:
 - **flutter_login** (Sign Up/Login flow)
 - **flutter_dotenv** (Environment variables)
 
-#### Back-End (Node.js --- [project link](/theronwolcott/chattqw-node))
+#### Back-End (Node.js --- [project link](https://github.com/theronwolcott/chattqw-node)
 - **Express.js** (API framework)
 - **MongoDB & Mongoose** (Database & ODM)
 - **dotenv** (Environment variables)
@@ -90,7 +90,7 @@ This project follows a **modular, provider-driven architecture** for **scalabili
 - Handles **secure API requests** to the Node.js backend.
 - Supports **user sign up/login**, **fetching chat history**, **saving messages**, and **updating chat metadata**.
 
-#### **9.  [Node.js Backend](/theronwolcott/chattqw-node)**
+#### **9.  [Node.js Backend](https://github.com/theronwolcott/chattqw-node)**
 - **MongoDB database** for chat storage.
 - **Express.js API** endpoints:
   - `/chat/list` - Fetch all past chats.
@@ -166,7 +166,7 @@ flutter run
 ```
 
 ### **5. Run the Back-End Project**
-See [ChatTQW Back-End Project](/theronwolcott/chattqw-node) (Node.js)
+See [ChatTQW Back-End Project](https://github.com/theronwolcott/chattqw-node) (Node.js)
 
 ## Screenshots
 
